@@ -4,64 +4,78 @@
 # =============================================================================
 
 import streamlit as st
-import requests
-import time
 import json
+import datetime
 
-st.set_page_config(page_title="Universal UI5 Tester", layout="wide")
+# App Config
+st.set_page_config(page_title="Universal UI Tester", layout="wide")
 
-st.title("🌐 Universal UI5 Application Tester")
-st.markdown("Enter a URL to a deployed UI5 application and perform automated diagnostics.")
+# App Title
+st.title("🌐 Universal UI Tester")
+st.caption("Author & Designer: Muraleedharan K.S")
 
-app_url = st.text_input("🔗 UI5 Application URL", placeholder="https://example.com/index.html")
+# Sidebar Controls
+st.sidebar.header("Test Configurations")
+test_url = st.sidebar.text_input("🔗 Application URL", placeholder="https://your-app.com")
 
-test_backend = st.checkbox("Enable Backend Call Simulation", value=True)
-test_ui = st.checkbox("Enable UI Element Checks", value=True)
-test_security = st.checkbox("Enable Injection/Security Checks", value=True)
-test_ai = st.checkbox("Use AI to Generate Tests", value=True)
+test_mode = st.sidebar.radio(
+    "🧪 Show Results As",
+    ["Only Issues", "Issues + Suggestions"],
+    index=1
+)
 
-if st.button("🚀 Run Diagnostics"):
-    if not app_url:
-        st.warning("Please enter a valid URL.")
-    else:
-        with st.spinner("Running diagnostics..."):
-            time.sleep(2)
-            st.success("Diagnostics complete.")
+run_test = st.sidebar.button("🚀 Run Test")
 
-        results = []
+# Simulated Test Execution
+def run_mock_test():
+    # Simulated field-wise test results
+    return [
+        {
+            "field": "#emailInput",
+            "value": "test@demo.com",
+            "status": "FAIL",
+            "issue": "Unmasked personal data",
+            "suggestion": "Use UI5 formatter or backend masking"
+        },
+        {
+            "field": "#materialType",
+            "value": "RAW",
+            "status": "PASS"
+        },
+        {
+            "field": "#discount",
+            "value": "100%",
+            "status": "WARN",
+            "issue": "High discount value without approval logic",
+            "suggestion": "Add validation or approval check"
+        }
+    ]
 
-        if test_ui:
-            results.append({
-                "type": "UI Check",
-                "status": "PASS",
-                "message": "UI elements rendered correctly."
-            })
+# Run Test
+if run_test and test_url:
+    st.subheader("🧾 Test Results")
+    results = run_mock_test()
 
-        if test_backend:
-            results.append({
-                "type": "Backend Call",
-                "status": "WARN",
-                "message": "Multiple calls to /getCustomer found (3 times)."
-            })
+    for result in results:
+        col1, col2, col3 = st.columns([3, 2, 5])
+        col1.markdown(f"**🔖 Field:** `{result['field']}`")
+        col2.markdown(f"**📤 Value:** `{result['value']}`")
+        col3.markdown(f"**Status:** :{'green' if result['status']=='PASS' else 'orange' if result['status']=='WARN' else 'red'}[{result['status']}]")
 
-        if test_security:
-            results.append({
-                "type": "Security",
-                "status": "FAIL",
-                "message": "Injection pattern `<script>` allowed in input field."
-            })
+        if test_mode == "Issues + Suggestions" and result['status'] != "PASS":
+            st.markdown(f"🔍 *Issue:* {result.get('issue', '-')}")
+            st.markdown(f"💡 *Suggestion:* {result.get('suggestion', '-')}")
+            st.markdown("---")
 
-        if test_ai:
-            results.append({
-                "type": "AI Prompt",
-                "status": "PASS",
-                "message": "Suggested 3 test cases using AI."
-            })
+    # Export buttons
+    export_json = st.button("⬇️ Export JSON")
+    export_pdf = st.button("⬇️ Export PDF (coming soon)")
 
-        st.markdown("### 📋 Test Results")
-        for r in results:
-            color = {"PASS": "green", "WARN": "orange", "FAIL": "red"}[r["status"]]
-            st.markdown(f"**[{r['type']}]** : <span style='color:{color}'>{r['status']}</span> - {r['message']}", unsafe_allow_html=True)
+    if export_json:
+        file_name = f"ui_test_result_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(file_name, "w") as f:
+            json.dump(results, f, indent=2)
+        st.success(f"Exported results to `{file_name}`")
 
-        st.markdown("### 📤 Export Results")
-        st.download_button("Download JSON", json.dumps(results, indent=2), file_name="ui5_diagnostics.json", mime="application/json")
+else:
+    st.info("Enter the application URL and click **Run Test** to begin.")
